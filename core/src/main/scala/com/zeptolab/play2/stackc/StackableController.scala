@@ -1,4 +1,4 @@
-package jp.t2v.lab.play2.stackc
+package com.zeptolab.play2.stackc
 
 import play.api.mvc._
 import scala.collection.concurrent.TrieMap
@@ -7,9 +7,11 @@ import scala.util.{Failure, Success}
 import scala.util.control.{NonFatal, ControlThrowable}
 
 trait StackableController {
-    self: Controller =>
+  self: BaseController =>
 
-  final class StackActionBuilder(params: Attribute[_]*) extends ActionBuilder[RequestWithAttributes] {
+  final class StackActionBuilder(params: Attribute[_]*) extends ActionBuilder[RequestWithAttributes, AnyContent] {
+    override def parser: BodyParser[AnyContent] = parse.default
+    override protected def executionContext: ExecutionContext = defaultExecutionContext
     def invokeBlock[A](req: Request[A], block: (RequestWithAttributes[A]) => Future[Result]): Future[Result] = {
       val request = new RequestWithAttributes(req, new TrieMap[RequestAttributeKey[_], Any] ++= params.map(_.toTuple))
       try {
@@ -48,7 +50,6 @@ trait StackableController {
     req.get(ExecutionContextKey).getOrElse(play.api.libs.concurrent.Execution.defaultContext)
 
 }
-
 
 trait RequestAttributeKey[A] {
 
